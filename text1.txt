@@ -1,1 +1,88 @@
-hi hello kona
+
+pipeline {
+    agent any
+    tools {
+        jdk "jdk11"
+        maven 'maven3'
+    }
+    
+    environment {
+        SCANNER_HOME= tool 'sonar-scanner'
+    }
+
+    stages {
+        stage('git') {
+            steps {
+                git branch: 'main', changelog: false, poll: false, url: 'https://github.com/Harikona77/Ekart.git'
+            }
+        }
+        stage('compile') {
+            steps {
+                sh 'mvn clean compile -DskipTests=true'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                sh '''
+                    /var/lib/jenkins/tools/hudson.plugins.sonar.SonarRunnerInstallation/sonar-scanner/bin/sonar-scanner \
+                  -Dsonar.projectName=Shopping-Cart \
+                  -Dsonar.java.binaries=. \
+                  -Dsonar.projectKey=Shopping-Cart \
+                  -Dsonar.login=squ_1d361348ae4cc4386a88cfe26bdde7999b378611 \
+                  -Dsonar.host.url=http://54.158.58.148:9000/
+                '''
+            }
+        }
+        
+        stage('build') {
+            steps {
+                sh 'mvn clean install -DskipTests=true'
+            }
+        }
+        
+        stage('push and build docker') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: '0a656c97-9cff-44aa-9d2d-a4e57d657aab') {
+                        sh "docker build -t shopping:v3 -f docker/Dockerfile ."
+                        sh "docker tag shopping:v3 smily786/shopping:v3"
+                        sh "docker push smily786/shopping:v3"
+                    }    
+                }
+            }
+        }
+        
+        stage('trigger cd ') {
+            steps {
+                build job: "cd" ,wait: true 
+            }
+        }
+        
+        
+        
+    }  
+    
+}
+
+
+
+
+//cd//
+
+pipeline {
+    agent any
+
+    stages {
+        stage('docker deploy') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: '0a656c97-9cff-44aa-9d2d-a4e57d657aab') {
+                        sh "docker run -d --name hari -p 8070:8070 smily786/shopping:v3"
+                    }
+                }
+            }
+        }    
+    }
+}
+
+
