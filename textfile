@@ -109,7 +109,7 @@ kind create cluster --name=tws-cluster --config=config.yml
 
 kubectl get nodes
 
-
+//ekart//
 
 vim deployment.yml
 
@@ -162,8 +162,134 @@ kubectl apply -f service.yml
 kubectl apply -f service.yaml
 
 
+//nginx//
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+spec:
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+
+
+
+//ingress controller//
+
+kubectl apply -f ingress.yml
+
+
 
 kubectl apply -f https://kind.sigs.k8s.io/examples/ingress/deploy-ingress-nginx.yaml
+
+
+kubectl get ns
+
+
+kubectl get pods -n ingress-nginx
+
+kubectl get svc -n ingress-nginx
+
+vim ingress.yml
+
+
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minimal-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /nginx
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx
+            port:
+              number: 80
+
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ekart
+            port:
+              number: 8070
+
+
+
+kubectl apply -f ingress.yml
+
+
+kubectl get svc -n ingress-nginx
+
+sudo -E kubectl port-forward service/ingress-nginx-controller -n ingress-nginx 8081:80 --address=0.0.0.0
+
+
+sudo -E kubectl port-forward service/ekart  8070:8070 --address=0.0.0.0
+
+sudo -E kubectl port-forward service/nginx  81:80 --address=0.0.0.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
