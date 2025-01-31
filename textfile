@@ -105,9 +105,83 @@ nodes:
 
 
 
-
-
 kind create cluster --name=tws-cluster --config=config.yml
+
+kubectl get nodes
+
+
+
+vim deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ekart
+  labels:
+    app: ekart
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ekart
+  template:
+    metadata:
+      labels:
+        app: ekart
+    spec:
+      containers:
+      - name: ekart
+        image: smily786/shopping:v4
+        ports:
+        - containerPort: 8070
+
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ekart
+spec:
+  selector:
+    app: ekart
+  ports:
+    - protocol: TCP
+      port: 82
+      targetPort: 8070
+
+
+
+kubectl apply -f deployment.yml
+
+kubectl apply -f deployment.yaml
+
+
+
+
+kubectl apply -f service.yml
+kubectl apply -f service.yaml
+
+
+
+kubectl apply -f https://kind.sigs.k8s.io/examples/ingress/deploy-ingress-nginx.yaml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
